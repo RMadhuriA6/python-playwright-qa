@@ -1,5 +1,4 @@
 import pytest
-from playwright.sync_api import sync_playwright
 from playwright.sync_api import expect
 
 
@@ -22,16 +21,6 @@ class WebPage:
         self.page.get_by_role("textbox", name="Username").fill(self.username)
         self.page.get_by_role("textbox", name="Password").fill(self.password)
         self.page.get_by_role("button", name="login").click()
-        self.page.wait_for_timeout(2000)
-
-
-@pytest.fixture
-def page_launcher():
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
-        page = browser.new_page()
-        yield page
-        browser.close()
 
 
 def test_login_with_valid_credentials(page_launcher):
@@ -53,21 +42,28 @@ def test_login_with_invalid_credentials(page_launcher):
     print(f'Message displayed on screen: {error_msg.text_content()}')
 
 
-def test_saucedemo_price_sorting_lo_to_hi(page_launcher):
+@pytest.mark.parametrize("option_value, active_option, sort", [
+    pytest.param("lohi","Price (low to high)","asc", id="Sorted in asc"),
+    pytest.param("hilo","Price (high to low)","desc", id="Sorted in desc")
+])
+def test_saucedemo_price_sorting_lo_to_hi(page_launcher, option_value, active_option, sort):
     user = WebPage(page_launcher)
     user.open("https://www.saucedemo.com/")
     user.login("standard_user", "secret_sauce")
     user.page.keyboard.press("Enter")
-    user.page.locator('[data-test="product-sort-container"]').select_option(value="lohi")
-    expect(user.page.locator("//span[@data-test='active-option']")).to_contain_text("Price (low to high)")
+    user.page.locator('[data-test="product-sort-container"]').select_option(value=option_value)
+    expect(user.page.locator("//span[@data-test='active-option']")).to_contain_text(active_option)
     price_list1 = user.page.locator('[data-test = "inventory-item-price"]').all_inner_texts()
     price_list2 = []
     for val in price_list1:
         new_val = float(val.strip('$'))
         price_list2.append(new_val)
-    price_list_sorted = sorted(price_list2)
+    if sort == "asc":
+        price_list_sorted = sorted(price_list2)
+    elif sort == "desc":
+        price_list_sorted = sorted(price_list2, reverse=True)
     assert price_list_sorted == price_list2
-    print('Sorted by Price (low to high)')
+    print(f'Sorted by {active_option}')
 
 
 def test_alert_accept(page_launcher):
@@ -77,26 +73,26 @@ def test_alert_accept(page_launcher):
     alert.page.on("dialog", lambda dialog: print(f'Alert message: {dialog.message}'))
     alert.page.on("dialog", lambda dialog: dialog.accept())
     alert.page.get_by_role("button", name="Click for JS Alert").click()
-    assert alert.page.locator('[id = "result"]').text_content() == "You successfully clicked an alert"
+    expect(alert.page.locator('[id = "result"]')).to_have_text("You successfully clicked an alert")
 
 
 def test_iframes_static(page_launcher):
-    frame1 = WebPage(page_launcher)
-    frame1.open("https://the-internet.herokuapp.com")
-    frame1.page.get_by_role("link", name="Frames", exact=True).click()
-    frame1.page.get_by_role("link", name="iFrame").click()
+    frame = WebPage(page_launcher)
+    frame.open("https://the-internet.herokuapp.com")
+    frame.page.get_by_role("link", name="Frames", exact=True).click()
+    frame.page.get_by_role("link", name="iFrame").click()
 #   iframe_text = frame.page.frame_locator("//iframe[@title='Rich Text Area']").locator("body").text_content()
-    iframe_text = frame1.page.locator("//iframe[@title='Rich Text Area']").content_frame.locator("body").text_content()
-    assert iframe_text == "Your content goes here."
+    iframe_text = frame.page.locator("//iframe[@title='Rich Text Area']").content_frame.locator("body")
+    expect(iframe_text).to_have_text("Your content goes here.")
 
 
 def test_iframes_editing(page_launcher):
-    frame2 = WebPage(page_launcher)
-    frame2.open("https://practice.expandtesting.com/iframe")
-    innerFrame = frame2.page.locator("//iframe[@id='email-subscribe']").content_frame
+    frame = WebPage(page_launcher)
+    frame.open("https://practice.expandtesting.com/iframe")
+    innerFrame = frame.page.locator("//iframe[@id='email-subscribe']").content_frame
     innerFrame.locator("//input[@id='email']").fill("abc@test.com")
     innerFrame.get_by_role("button", name="Subscribe").click()
-    assert innerFrame.locator("//div[@id='success-message']").text_content() == "You are now subscribed!"
+    expect(innerFrame.locator("//div[@id='success-message']")).to_have_text("You are now subscribed!")
 
 
 def test_multiple_tabs(page_launcher):
@@ -106,7 +102,7 @@ def test_multiple_tabs(page_launcher):
     with page_launcher.expect_popup() as popup_info:
         window.page.get_by_role("link", name="Click Here").click()
     new_page = popup_info.value
-    assert new_page.get_by_role("heading", name="New Window", exact=True).is_visible()
+    expect(new_page.get_by_role("heading", name="New Window", exact=True)).to_be_visible()
     print(new_page.title())
 
 
