@@ -4,6 +4,7 @@ with sync_playwright() as p:
     browser = p.chromium.launch(headless=False)
     page = browser.new_page()
     page.goto("https://swaglabs.in/")
-    page.wait_for_timeout(3000)
+    page.wait_for_timeout(5000)
     print(page.title())
     browser.close()
+

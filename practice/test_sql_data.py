@@ -3,7 +3,7 @@ import pytest
 
 
 def get_order_status(username):
-    conn = sqlite3.connect("test_data.db")
+    conn = sqlite3.connect("../data/test_data.db")
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM Orders WHERE username = ?;", (username,))
     order_status = cursor.fetchall()

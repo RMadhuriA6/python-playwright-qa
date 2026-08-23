@@ -62,4 +62,19 @@ for test in tests:
 
 print(full_test_report(name='Logout', status='progress', priority='low'))
 
-print(full_test_report('test7', 'medium', 'fail'))
+try:
+    print(full_test_report(('test7', 'medium', 'fail')))
+except TypeError:
+    print('Checkout the count of arguments passed')
+
+
+    def outer():
+        x = 5
+
+        def inner():
+            print(x)
+
+        inner()
+
+
+    outer()

@@ -36,7 +36,6 @@ with sync_playwright() as p:
                 return f'Login unsuccessful with {self.username} and {self.password}'
 
 
-
     User = LoginPage()
     User.open("https://www.saucedemo.com/")
     User.login("standard_user", "secret_sauce")
