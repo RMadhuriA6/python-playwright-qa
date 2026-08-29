@@ -1,18 +1,24 @@
 import sqlite3
+import os
 
-conn = sqlite3.connect("login_test_data.db")
+db_path = os.path.join(os.path.dirname(__file__), "test_data.db")
+conn = sqlite3.connect(db_path)
 
 cursor = conn.cursor()
 
-# cursor.execute("CREATE TABLE Login_Credentials(username VARCHAR(20), password VARCHAR(20), result VARCHAR(75));")
-# cursor.execute("INSERT INTO Login_Credentials(username, password, result) VALUES('user', 'secret0', 'Invalid username with invalid password');")
-# cursor.execute("UPDATE Login_Credentials SET result = 'Locked out user' WHERE username = 'locked_out_user';")
+# cursor.execute("CREATE TABLE Sort(value VARCHAR(20), name VARCHAR(20));")
+# cursor.execute("INSERT INTO Sort(value, name) VALUES('az', 'Name (A to Z)');")
 
-cursor.execute("SELECT * from Login_Credentials;")
+cursor.execute("UPDATE Login_Credentials "
+               "SET username = 'locked_out_user' "
+               "WHERE result = 'Valid username with Empty password'"
+               "OR result = 'Valid username with invalid password';")
 
-login_table = cursor.fetchall()
+cursor.execute("SELECT * FROM Login_Credentials WHERE username = 'standard_user' OR username = 'problem_user';")
+
+# cursor.execute("SELECT * from Sort;")
+sort_table = cursor.fetchall()
 conn.commit()
-for row in login_table:
-    print(row)
 
-print(('Empty username with valid password' or 'Both fields Empty'))
+for row in sort_table:
+    print(row)
