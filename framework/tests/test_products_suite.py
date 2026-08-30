@@ -11,10 +11,11 @@ from framework.util.get_data import get_sort_data, get_login_data
 
 
 @pytest.mark.parametrize("name",get_sort_data())
-def test_displayed_active_option_after_sorting(page_launcher,name):
+@pytest.mark.parametrize("username,password",get_login_data())
+def test_displayed_active_option_after_sorting(page_launcher,name,username, password):
     login_page = LoginPage(page_launcher)
     login_action = LoginActions(login_page)
-    login_action.login("standard_user", "secret_sauce")
+    login_action.login(username, password)
 
     product_page = ProductsPage(page_launcher)
     product_actions = ProductsActions(product_page)
